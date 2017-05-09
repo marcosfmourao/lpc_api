@@ -56,6 +56,7 @@ class InscricaoResource(ModelResource):
 
 
 class EventoCientificoResource(ModelResource):
+    realizador = fields.ToOneField(PessoaFisicaResource, 'realizador')
     class Meta:
         queryset = EventoCientifico.objects.all()
         allowed_methods = ['get', 'post', 'delete', 'put']
