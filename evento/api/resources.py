@@ -3,9 +3,30 @@ from tastypie import fields, utils
 from evento.models import *
 from django.contrib.auth.models import User
 from tastypie.authorization import Authorization
+from tastypie.exceptions import Unauthorized
 
 
 class TipoInscricaoResource(ModelResource):
+    def obj_create(self, bundle, **kwargs):
+        print (bundle.data)
+        tipo = TipoInscricao()
+        tipo.descricao = bundle.data['descricao'].upper()
+        if TipoInscricao.objects.filter(descricao = tipo.descricao).exists():
+            print ("Nome já existe")
+            raise Unauthorized ('Já existe tipo com este nome')
+        else:
+            tipo.save()
+            bundle.obj = tipo
+        return bundle
+
+    def obj_delete_list(self, bundle, **kwargs):
+        raise Unauthorized ('Não pode apagar uma lista!')
+
+
+
+
+
+
     class Meta:
         queryset = TipoInscricao.objects.all()
         allowed_methods = ['get', 'post', 'delete', 'put']
@@ -45,9 +66,29 @@ class EventoResource(ModelResource):
         }
 
 class InscricaoResource(ModelResource):
+
+
     pessoa = fields.ToOneField(PessoaFisicaResource, 'pessoa')
     evento = fields.ToOneField(EventoResource, 'evento')
     tipoInscricao = fields.ToOneField(TipoInscricaoResource, 'tipoInscricao')
+
+    #tipo = TipoInscricao()
+    #tipo.descricao = bundle.data['descricao'].upper()
+    #if TipoInscricao.objects.filter(descricao = tipo.descricao).exists():
+        #print ("Nome já existe")
+        #raise Unauthorized ('Já existe tipo com este nome')
+    #def obj_create(self, bundle, **kwargs):
+    #    insc = Inscricoes()
+    #    insc.PessoaFisica = bundle.data['pessoa']
+    #    insc.Evento = bundle.data['evento']
+    #    if Inscricoes.objects.filter(evento = insc.evento) and Inscricoes.objects.filter(evento = insc.pessoa):
+    #            def obj_create(self, bundle, **kwargs):
+    #                raise Unauthorized ('Não pode inserir a mesma pessoa + de uma vez!')
+
+
+
+
+
     class Meta:
         queryset = Inscricoes.objects.all()
         allowed_methods = ['get', 'post', 'delete', 'put']
