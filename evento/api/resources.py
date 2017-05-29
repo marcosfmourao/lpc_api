@@ -66,43 +66,49 @@ class EventoResource(ModelResource):
         }
 
 class InscricaoResource(ModelResource):
+    def obj_create(self, bundle, **kwargs):
+        x = bundle.data['pessoa'].split("/")
+        y = bundle.data['evento'].split("/")
+        print(x[4])
+        print(y[4])
+        if not(Inscricoes.objects.filter(pessoa = x[4]) and Inscricoes.objects.filter(evento = y[4])):
+            e = bundle.data['evento'].split("/")
+            t = bundle.data['tipo'].split("/")
 
+            inscricao = Inscricoes()
+
+            inscricao.pessoa = PessoaFisica.objects.get(pk = int(x[4]) )
+            inscricao.evento = Evento.objects.get(pk = int(e[4]) )
+            inscricao.tipoInscricao = TipoInscricao.objects.get(pk = int(t[4]) )
+
+            inscricao.dataEHoraDaInscricao = bundle.data["dataEHoraDaInscricao"]
+            inscricao.save()
+            bundle.obj = inscricao
+            return bundle
+        else:
+            raise Unauthorized("Pessoa ja cadastrada no evento!")
 
     pessoa = fields.ToOneField(PessoaFisicaResource, 'pessoa')
     evento = fields.ToOneField(EventoResource, 'evento')
-    tipoInscricao = fields.ToOneField(TipoInscricaoResource, 'tipoInscricao')
-
-    #tipo = TipoInscricao()
-    #tipo.descricao = bundle.data['descricao'].upper()
-    #if TipoInscricao.objects.filter(descricao = tipo.descricao).exists():
-        #print ("Nome já existe")
-        #raise Unauthorized ('Já existe tipo com este nome')
-    #def obj_create(self, bundle, **kwargs):
-    #    insc = Inscricoes()
-    #    insc.PessoaFisica = bundle.data['pessoa']
-    #    insc.Evento = bundle.data['evento']
-    #    if Inscricoes.objects.filter(evento = insc.evento) and Inscricoes.objects.filter(evento = insc.pessoa):
-    #            def obj_create(self, bundle, **kwargs):
-    #                raise Unauthorized ('Não pode inserir a mesma pessoa + de uma vez!')
-
-
-
-
-
+    tipo = fields.ToOneField(TipoInscricaoResource, 'tipoInscricao')
     class Meta:
         queryset = Inscricoes.objects.all()
         allowed_methods = ['get', 'post', 'delete', 'put']
         authorization = Authorization()
+        filtering = {
+            "descricao": ('exact', 'startswith')
+        }
+
 
 
 
 class EventoCientificoResource(ModelResource):
-    realizador = fields.ToOneField(PessoaFisicaResource, 'realizador')
     class Meta:
         queryset = EventoCientifico.objects.all()
         allowed_methods = ['get', 'post', 'delete', 'put']
         authorization = Authorization()
-        filtering = {  "issn": ('exact', 'startswith',)
+        filtering = {
+            "issn": ('exact', 'startswith',)
         }
 
 
@@ -136,7 +142,7 @@ class AutorResource(ModelResource):
 
 
 class ArtigoCientificoResource(ModelResource):
-    evento = fields.ToOneField(EventoCientificoResource, 'evento')
+    eventoCientifico = fields.ToOneField(EventoCientificoResource, 'evento')
     class Meta:
         queryset = ArtigoCientifico.objects.all()
         allowed_methods = ['get', 'post', 'delete', 'put']
@@ -146,11 +152,10 @@ class ArtigoCientificoResource(ModelResource):
         }
 
 class ArtigoAutorResource(ModelResource):
-    class Meta:
         artigoCientifico= fields.ToOneField(ArtigoCientificoResource, 'artigoCientifico')
         autor = fields.ToOneField(PessoaFisicaResource, 'autor')
 
         class Meta:
             queryset = ArtigoAutor.objects.all()
-        allowed_methods = ['get', 'post', 'delete', 'put']
-        authorization = Authorization()
+            allowed_methods = ['get', 'post', 'delete', 'put']
+            authorization = Authorization()
